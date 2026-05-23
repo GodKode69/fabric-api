@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     "https://godkode.xyz",
     "https://www.godkode.xyz",
     "https://fabric.godkode.xyz",
-    "http://localhost:5173/"
+    "http://localhost:5173",
   ];
 
   const origin = req.headers.origin;
