@@ -44,7 +44,7 @@ const commandSchema = new mongoose.Schema({
 });
 
 const Command =
-  mongoose.models.Command || mongoose.model("cmd", commandSchema);
+  mongoose.models.cmd || mongoose.model("cmd", commandSchema);
 
 // ── CORS helper (reuse same origins as stats) ───────────────────────────────
 const ALLOWED_ORIGINS = [
