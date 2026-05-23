@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 
 const MONGO_URI = process.env.MONGO_URI;
 
-// Cache the connection across hot reloads in dev / serverless reuse in prod
 let cached = global._mongoose || (global._mongoose = { conn: null, promise: null });
 
 async function connectDB() {
@@ -25,15 +24,14 @@ const statsSchema = new mongoose.Schema({
   updatedAt: Date,
 });
 
-// Prevent model recompilation on hot reload
 const Stats = mongoose.models.Stats || mongoose.model("Stats", statsSchema);
 
 export default async function handler(req, res) {
-  // CORS — allow your GitHub Pages domain + localhost for dev
   const allowedOrigins = [
     "https://godkode.xyz",
     "https://www.godkode.xyz",
-    "https://fabric.godkode.xyz"
+    "https://fabric.godkode.xyz",
+    "http://localhost:5173/"
   ];
 
   const origin = req.headers.origin;
