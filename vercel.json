@@ -12,6 +12,10 @@
       "dest": "/api/stats.js"
     },
     {
+        "src": "/commands",
+        "dest": "/api/commands.js"
+    },
+    {
       "src": "/",
       "dest": "/api/stats.js"
     }
