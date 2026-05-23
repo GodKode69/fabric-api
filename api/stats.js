@@ -20,6 +20,9 @@ const statsSchema = new mongoose.Schema({
   users: Number,
   ping: Number,
   commands: Number,
+  categories: Number,
+  executed: Number,
+  voice: Number,
   uptime: Number,
   updatedAt: Date,
 });
