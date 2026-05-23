@@ -1,36 +1,21 @@
 import mongoose from "mongoose";
 
-const MONGO_URI = process.env.MONGO_URI;
+const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGO_URI) {
-  throw new Error("Missing MONGO_URI environment variable");
-}
-
-/**
- * Cached connection (safe for Vercel serverless)
- */
-let cached = global.mongoose;
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
+// Cache the connection across hot reloads in dev / serverless reuse in prod
+let cached = global._mongoose || (global._mongoose = { conn: null, promise: null });
 
 async function connectDB() {
   if (cached.conn) return cached.conn;
-
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGO_URI, {
+    cached.promise = mongoose.connect(MONGODB_URI, {
       bufferCommands: false,
     });
   }
-
   cached.conn = await cached.promise;
   return cached.conn;
 }
 
-/**
- * Schema + Model
- */
 const statsSchema = new mongoose.Schema({
   guilds: Number,
   users: Number,
@@ -40,36 +25,63 @@ const statsSchema = new mongoose.Schema({
   updatedAt: Date,
 });
 
-// prevent model overwrite on hot reload / serverless reuse
-const Stats =
-  mongoose.models.Stats || mongoose.model("Stats", statsSchema);
+// Prevent model recompilation on hot reload
+const Stats = mongoose.models.Stats || mongoose.model("Stats", statsSchema);
 
-/**
- * Vercel Serverless Handler
- */
 export default async function handler(req, res) {
-  try {
-    if (req.method !== "GET") {
-      return res.status(405).json({
-        success: false,
-        error: "Method Not Allowed",
-      });
-    }
+  // CORS — allow your GitHub Pages domain + localhost for dev
+  const allowedOrigins = [
+    "https://godkode.xyz",
+    "https://www.godkode.xyz",
+    "http://localhost:5173",
+    "http://localhost:4173",
+  ];
 
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
     await connectDB();
 
-    const stats = await Stats.findOne().lean();
+    const stats = await Stats.findOne({}).lean();
+
+    if (!stats) {
+      return res.status(404).json({ error: "No stats found" });
+    }
+
+    // Format uptime into human-readable
+    const uptimeSeconds = Math.floor(stats.uptime);
+    const days    = Math.floor(uptimeSeconds / 86400);
+    const hours   = Math.floor((uptimeSeconds % 86400) / 3600);
+    const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+    const seconds = uptimeSeconds % 60;
 
     return res.status(200).json({
-      success: true,
-      stats: stats || null,
+      guilds:    stats.guilds,
+      users:     stats.users,
+      ping:      stats.ping,
+      commands:  stats.commands,
+      uptime: {
+        raw:     stats.uptime,
+        days,
+        hours,
+        minutes,
+        seconds,
+        formatted: `${days}d ${hours}h ${minutes}m ${seconds}s`,
+      },
+      updatedAt: stats.updatedAt,
     });
   } catch (err) {
-    console.error("Stats API Error:", err);
-
-    return res.status(500).json({
-      success: false,
-      error: "Internal Server Error",
-    });
+    console.error("Stats API error:", err);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
