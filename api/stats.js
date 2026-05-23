@@ -67,6 +67,7 @@ export default async function handler(req, res) {
       users:     stats.users,
       ping:      stats.ping,
       commands:  stats.commands,
+      categories: stats.categories,
       uptime: {
         raw:     stats.uptime,
         days,
