@@ -17,7 +17,7 @@
     },
     {
       "src": "/",
-      "dest": "/api/stats.js"
+      "dest": "/index.html"
     }
   ]
 }
