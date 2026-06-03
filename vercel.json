@@ -4,6 +4,10 @@
     "api/stats.js": {
       "memory": 256,
       "maxDuration": 10
+    },
+    "api/reviews.js": {
+      "memory": 256,
+      "maxDuration": 10
     }
   },
   "routes": [
@@ -14,6 +18,10 @@
     {
         "src": "/commands",
         "dest": "/api/commands.js"
+    },
+    {
+      "src": "/reviews(?:/(.*))?",
+      "dest": "/api/reviews.js?path=$1"
     },
     {
       "src": "/",
