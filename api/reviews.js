@@ -52,7 +52,7 @@ function setCors(req, res) {
   if (ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
@@ -170,8 +170,6 @@ export default async function handler(req, res) {
 
     if (req.method === "GET" && !path) return getReviews(res);
     if (req.method === "POST" && !path) return createReview(req, res);
-    if (req.method === "PATCH" && path === "alias") return updateAlias(req, res);
-    if (req.method === "PATCH") return updateReview(req, res, path);
 
     return res.status(405).json({ error: "Method not allowed" });
   } catch (err) {
