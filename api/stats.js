@@ -84,7 +84,7 @@ export default async function handler(req, res) {
       updatedAt: stats.updatedAt,
     });
   } catch (err) {
-    console.error("Stats API error:", err);
+    console.error("Stats API error:", err.message);
     return res.status(500).json({ error: "Internal server error" });
   }
 }

@@ -100,7 +100,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json(shaped);
   } catch (err) {
-    console.error("Commands API error:", err);
+    console.error("Commands API error:", err.message);
     return res.status(500).json({ error: "Internal server error" });
   }
 }
