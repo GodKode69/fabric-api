@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 
-const MONGO_URI = process.env.MONGO_URI;
+const mongoUri = process.env.MONGO_URI;
 
 let cached = global._mongoose || (global._mongoose = { conn: null, promise: null });
 
 async function connectDB() {
   if (cached.conn) return cached.conn;
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGO_URI, {
+    cached.promise = mongoose.connect(mongoUri, {
       bufferCommands: false,
     });
   }
@@ -33,8 +33,8 @@ export default async function handler(req, res) {
   const allowedOrigins = [
     "https://godkode.xyz",
     "https://www.godkode.xyz",
+    "https://godkode69.github.io",
     "https://fabric.godkode.xyz",
-    "http://localhost:5173",
   ];
 
   const origin = req.headers.origin;
@@ -58,7 +58,6 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: "No stats found" });
     }
 
-    // Format uptime into human-readable
     const uptimeSeconds = Math.floor(stats.uptime);
     const days    = Math.floor(uptimeSeconds / 86400);
     const hours   = Math.floor((uptimeSeconds % 86400) / 3600);

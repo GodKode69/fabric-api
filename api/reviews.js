@@ -1,17 +1,17 @@
 import { randomUUID } from "crypto";
 import mongoose from "mongoose";
 
-const MONGO_URI = process.env.MONGO_URI;
+const mongoUri = process.env.MONGO_URI;
 
 let cached =
   global._mongoose || (global._mongoose = { conn: null, promise: null });
 
 async function connectDB() {
   if (cached.conn) return cached.conn;
-  if (!MONGO_URI) throw new Error("Missing MONGO_URI");
+  if (!mongoUri) throw new Error("Missing MONGO_URI");
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGO_URI, { bufferCommands: false });
+    cached.promise = mongoose.connect(mongoUri, { bufferCommands: false });
   }
 
   cached.conn = await cached.promise;
@@ -38,25 +38,21 @@ const Review =
   mongoose.models.PortfolioReview ||
   mongoose.model("PortfolioReview", reviewSchema, "portfolio_reviews");
 
-/* ── CORS ──────────────────────────────────────────────────────────────────── */
-
-const ALLOWED_ORIGINS = [
+const allowedOrigins = [
   "https://godkode.xyz",
   "https://www.godkode.xyz",
   "https://godkode69.github.io",
   "https://fabric.godkode.xyz",
-  "http://localhost:3000",
-  "http://localhost:5173",
 ];
 
-const PATCH_ALLOWED_ORIGINS = [
+const patchAllowedOrigins = [
   "https://godkode.xyz",
   "https://www.godkode.xyz",
 ];
 
 function setCors(req, res) {
   const origin = req.headers.origin;
-  if (ALLOWED_ORIGINS.includes(origin)) {
+  if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS");
@@ -66,11 +62,9 @@ function setCors(req, res) {
   );
 }
 
-/* ── Rate limiter (in-memory, per IP) ──────────────────────────────────────── */
-
 const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW = 60 * 1000;
-const RATE_LIMIT_MAX = 10;
+const rateLimitWindow = 60 * 1000;
+const rateLimitMax = 10;
 
 function getRateLimitKey(ip, method) {
   return `${ip}:${method}`;
@@ -82,12 +76,13 @@ function isRateLimited(ip, method) {
   const entry = rateLimitMap.get(key);
 
   if (!entry || now > entry.resetTime) {
-    rateLimitMap.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    rateLimitMap.set(key, { count: 1, resetTime: now + rateLimitWindow });
     return false;
   }
 
+  if (entry.count >= rateLimitMax) return true;
   entry.count++;
-  return entry.count > RATE_LIMIT_MAX;
+  return false;
 }
 
 setInterval(() => {
@@ -95,12 +90,10 @@ setInterval(() => {
   for (const [key, entry] of rateLimitMap) {
     if (now > entry.resetTime) rateLimitMap.delete(key);
   }
-}, 5 * 60 * 1000);
-
-/* ── Input sanitization ─────────────────────────────────────────────────────── */
+}, 5 * 60 * 1000).unref();
 
 function stripHtmlTags(str) {
-  return str.replace(/<[^>]*>/g, "");
+  return str.replace(/<[^>]*>/g, "").replace(/<[^\s>]/g, "");
 }
 
 function stripSpecialChars(str) {
@@ -110,7 +103,7 @@ function stripSpecialChars(str) {
     .trim();
 }
 
-const ALIAS_CHARS = /^[a-zA-Z0-9\-_ ]+$/;
+const aliasChars = /^[a-zA-Z0-9\-_ ]+$/;
 
 function sanitizeString(value, maxLength) {
   if (typeof value !== "string") return "";
@@ -122,7 +115,7 @@ function sanitizeAlias(value) {
   if (typeof value !== "string") return "";
   const cleaned = stripHtmlTags(value);
   const trimmed = stripSpecialChars(cleaned).slice(0, 24);
-  if (!ALIAS_CHARS.test(trimmed)) return "";
+  if (!aliasChars.test(trimmed)) return "";
   return trimmed;
 }
 
@@ -132,16 +125,20 @@ function sanitizeNumber(value, fallback) {
   return Math.min(Math.max(next, 0), 100);
 }
 
-/* ── Helpers ────────────────────────────────────────────────────────────────── */
-
 function getRoutePath(req) {
   const url = new URL(req.url, "https://api.godkode.xyz");
   return url.searchParams.get("path") || "";
 }
 
 function getClientIp(req) {
+  const realIp = req.headers["x-real-ip"];
+  if (typeof realIp === "string" && realIp) return realIp;
+
   const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") return forwarded.split(",")[0].trim();
+  if (typeof forwarded === "string") {
+    const parts = forwarded.split(",").map((s) => s.trim());
+    return parts[parts.length - 1];
+  }
   return req.socket?.remoteAddress || "unknown";
 }
 
@@ -157,8 +154,6 @@ function shapeReview(review) {
     updatedAt: review.updatedAt,
   };
 }
-
-/* ── Handlers ───────────────────────────────────────────────────────────────── */
 
 async function getReviews(res) {
   const reviews = await Review.find({})
@@ -206,7 +201,7 @@ async function updateReview(req, res, id, ip) {
   }
 
   const origin = req.headers.origin;
-  if (!PATCH_ALLOWED_ORIGINS.includes(origin)) {
+  if (!patchAllowedOrigins.includes(origin)) {
     return res.status(403).json({ error: "Origin not allowed" });
   }
 
@@ -239,8 +234,6 @@ async function updateReview(req, res, id, ip) {
 
   return res.status(200).json({ review: shapeReview(review) });
 }
-
-/* ── Main handler ───────────────────────────────────────────────────────────── */
 
 export default async function handler(req, res) {
   setCors(req, res);
