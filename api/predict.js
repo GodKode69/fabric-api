@@ -1,18 +1,16 @@
 import { readFile } from "fs/promises";
+import { dirname } from "path";
 import { fileURLToPath } from "url";
 import * as ort from "onnxruntime-web/wasm";
 import sharp from "sharp";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 ort.env.wasm.numThreads = 1;
-ort.env.wasm.wasmPaths =
-  "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/";
+ort.env.wasm.wasmPaths = __dirname + "/../node_modules/onnxruntime-web/dist/";
 
 const modelUrl = new URL("./model.onnx", import.meta.url);
 const classesUrl = new URL("./classes.json", import.meta.url);
-
-ort.env.wasm.numThreads = 1;
-ort.env.wasm.wasmPaths =
-  "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/";
 
 const ALLOWED_ORIGINS = [
   "https://godkode.xyz",
