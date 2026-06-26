@@ -15,6 +15,7 @@ const ALLOWED_ORIGINS = [
   "https://www.godkode.xyz",
   "https://godkode69.github.io",
   "https://fabric.godkode.xyz",
+  "http://localhost:3000",
 ];
 
 const MEAN = [0.485, 0.456, 0.406];
