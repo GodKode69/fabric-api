@@ -2,19 +2,15 @@
   "version": 2,
   "functions": {
     "api/stats.js": {
-      "memory": 256,
       "maxDuration": 10
     },
     "api/commands.js": {
-      "memory": 256,
       "maxDuration": 10
     },
     "api/reviews.js": {
-      "memory": 256,
       "maxDuration": 10
     },
     "api/predict.js": {
-      "memory": 256,
       "maxDuration": 10
     }
   },
