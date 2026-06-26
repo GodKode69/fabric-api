@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "mongoose": "^8.4.0"
+    "mongoose": "^8.4.0",
+    "onnxruntime-node": "^1.21.0",
+    "sharp": "^0.33.0"
   }
 }

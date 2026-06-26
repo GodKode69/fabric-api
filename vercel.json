@@ -12,6 +12,10 @@
     "api/reviews.js": {
       "memory": 256,
       "maxDuration": 10
+    },
+    "api/predict.js": {
+      "memory": 512,
+      "maxDuration": 10
     }
   },
   "headers": [
@@ -37,6 +41,10 @@
     {
       "src": "/reviews(?:/(.*))?",
       "dest": "/api/reviews.js?path=$1"
+    },
+    {
+      "src": "/predict",
+      "dest": "/api/predict.js"
     },
     {
       "src": "/",
