@@ -1,7 +1,14 @@
 import { readFile } from "fs/promises";
-import { join } from "path";
-import ort from "onnxruntime-node";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+import * as ort from "onnxruntime-web/wasm";
 import sharp from "sharp";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+ort.env.wasm.numThreads = 1;
+ort.env.wasm.wasmPaths =
+  "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.27.0/dist/";
 
 const ALLOWED_ORIGINS = [
   "https://godkode.xyz",
@@ -19,7 +26,7 @@ let classes = null;
 
 async function loadModel() {
   if (session) return session;
-  const modelPath = join(process.cwd(), "api", "model.onnx");
+  const modelPath = join(__dirname, "model.onnx");
   const modelBuffer = await readFile(modelPath);
   session = await ort.InferenceSession.create(modelBuffer, {
     executionProviders: ["cpu"],
@@ -29,7 +36,7 @@ async function loadModel() {
 
 async function loadClasses() {
   if (classes) return classes;
-  const classesPath = join(process.cwd(), "api", "classes.json");
+  const classesPath = join(__dirname, "classes.json");
   const data = await readFile(classesPath, "utf-8");
   classes = JSON.parse(data);
   return classes;
